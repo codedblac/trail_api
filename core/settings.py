@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-default-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["adfinitum-backend.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["trail-api-c68z.onrender.com", "localhost", "127.0.0.1"]
 
 
 
@@ -55,13 +55,13 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "https://adfinitum-trails.vercel.app",
-    "https://adfinitum-backend.onrender.com",
+    "https://trail-api-c68z.onrender.com",
     "http://localhost:3000", 
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://adfinitum-trails.vercel.app",
-    "https://adfinitum-backend.onrender.com",
+    "https://trail-api-c68z.onrender.com",
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = False
@@ -153,7 +153,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",  
     ],
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend"
