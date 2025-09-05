@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,12 +33,14 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework_simplejwt",
     "django_filters",
+    "django_daraja",
     
     # apps
     "accounts",
     "products",
     "cart",
     "orders",
+    "payments",
     
 ]
 
@@ -179,3 +182,16 @@ DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'
 
 
 FRONTEND_URL = 'https://adfinitum-trails.vercel.app'     
+
+
+
+MPESA_ENVIRONMENT = 'sandbox'
+
+MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY')
+MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET')
+MPESA_SHORTCODE = config('MPESA_SHORTCODE')
+MPESA_PASSKEY = config('MPESA_PASSKEY')
+MPESA_ENV = config('MPESA_ENV')
+CALLBACK_URL = config('CALLBACK_URL')
+MPESA_SHORTCODE_TYPE = 'paybill'
+MPESA_EXPRESS_SHORTCODE = '174379'
