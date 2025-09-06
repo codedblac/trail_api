@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from cart.models import Cart, CartItem
 from products.models import Product
 
 User = settings.AUTH_USER_MODEL
@@ -16,26 +15,25 @@ class Order(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
-    PAYMENT_METHODS = [
-        ("stripe", "Stripe"),
-        ("paypal", "PayPal"),
-        ("cod", "Cash on Delivery"),
-    ]
-
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     email = models.EmailField()
     full_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=50, blank=True)
-    shipping_address = models.TextField()
-    billing_address = models.TextField(blank=True, null=True)
+
+    # ✅ Use string references to avoid circular import
+    shipping_address = models.ForeignKey(
+        "shipping.ShippingAddress", on_delete=models.PROTECT, null=True, blank=True
+    )
+    shipping_method = models.ForeignKey(
+        "shipping.ShippingMethod", on_delete=models.SET_NULL, null=True, blank=True
+    )
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default="stripe")
-    payment_id = models.CharField(max_length=255, blank=True, null=True)  # e.g. Stripe ID
-    payment_status = models.CharField(max_length=50, default="unpaid")
 
+    # Totals
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     created_at = models.DateTimeField(default=timezone.now)
@@ -60,7 +58,7 @@ class OrderItem(models.Model):
 
 
 class OrderHistory(models.Model):
-    """Optional: track order status changes for audit/logging"""
+    """Track order status changes for audit/logging"""
     order = models.ForeignKey(Order, related_name="history", on_delete=models.CASCADE)
     status = models.CharField(max_length=20)
     changed_at = models.DateTimeField(auto_now_add=True)

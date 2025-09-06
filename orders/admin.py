@@ -35,25 +35,24 @@ class OrderAdmin(admin.ModelAdmin):
         "full_name",
         "email",
         "status_colored",
-        "payment_method",
-        "payment_status",
+        "shipping_method",
+        "shipping_cost",
         "total",
         "created_at",
     )
     list_filter = (
         "status",
-        "payment_status",
-        "payment_method",
+        "shipping_method",
         "created_at",
     )
     search_fields = ("id", "email", "full_name", "phone_number")
     readonly_fields = (
         "subtotal",
         "discount",
+        "shipping_cost",
         "total",
         "created_at",
         "updated_at",
-        "payment_id",
     )
     inlines = [OrderItemInline, OrderHistoryInline]
     ordering = ("-created_at",)
@@ -62,11 +61,11 @@ class OrderAdmin(admin.ModelAdmin):
         ("Customer Info", {
             "fields": ("user", "full_name", "email", "phone_number")
         }),
-        ("Addresses", {
-            "fields": ("shipping_address", "billing_address")
+        ("Addresses & Shipping", {
+            "fields": ("shipping_address", "shipping_method", "shipping_cost")
         }),
         ("Order Details", {
-            "fields": ("status", "payment_method", "payment_status", "payment_id")
+            "fields": ("status",)
         }),
         ("Totals", {
             "fields": ("subtotal", "discount", "total")

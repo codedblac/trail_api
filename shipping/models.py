@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from orders.models import Order
 
 User = settings.AUTH_USER_MODEL
 
@@ -71,7 +70,8 @@ class Shipment(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
-    order = models.OneToOneField(Order, related_name="shipment", on_delete=models.CASCADE)
+    # 🔥 Lazy reference instead of direct import
+    order = models.OneToOneField("orders.Order", related_name="shipment", on_delete=models.CASCADE)
     address = models.ForeignKey(ShippingAddress, on_delete=models.PROTECT)
     method = models.ForeignKey(ShippingMethod, on_delete=models.SET_NULL, null=True, blank=True)
     courier_name = models.CharField(max_length=100, blank=True, null=True)

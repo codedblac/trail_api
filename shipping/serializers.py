@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import ShippingAddress, ShippingMethod, Shipment, ShipmentHistory
 
 
+# ----------------------------
+# SHIPPING ADDRESS
+# ----------------------------
 class ShippingAddressSerializer(serializers.ModelSerializer):
     """
     Serializer for customer shipping addresses
@@ -31,6 +34,9 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+# ----------------------------
+# SHIPPING METHOD
+# ----------------------------
 class ShippingMethodSerializer(serializers.ModelSerializer):
     """
     Serializer for available shipping methods
@@ -49,6 +55,9 @@ class ShippingMethodSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
+# ----------------------------
+# SHIPMENT HISTORY
+# ----------------------------
 class ShipmentHistorySerializer(serializers.ModelSerializer):
     """
     Serializer for shipment status history
@@ -65,6 +74,9 @@ class ShipmentHistorySerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "changed_at"]
 
 
+# ----------------------------
+# SHIPMENT
+# ----------------------------
 class ShipmentSerializer(serializers.ModelSerializer):
     """
     Serializer for order shipment
@@ -74,11 +86,17 @@ class ShipmentSerializer(serializers.ModelSerializer):
     method = ShippingMethodSerializer(read_only=True)
     history = ShipmentHistorySerializer(many=True, read_only=True)
 
+    # Write-only IDs for linking
     address_id = serializers.PrimaryKeyRelatedField(
-        queryset=ShippingAddress.objects.all(), source="address", write_only=True
+        queryset=ShippingAddress.objects.all(),
+        source="address",
+        write_only=True,
     )
     method_id = serializers.PrimaryKeyRelatedField(
-        queryset=ShippingMethod.objects.all(), source="method", write_only=True, required=False
+        queryset=ShippingMethod.objects.all(),
+        source="method",
+        write_only=True,
+        required=False,
     )
 
     class Meta:
@@ -102,4 +120,5 @@ class ShipmentSerializer(serializers.ModelSerializer):
             "id",
             "created_at",
             "history",
+            "order",  # 🚨 important: users shouldn't assign order manually
         ]
