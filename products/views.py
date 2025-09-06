@@ -15,14 +15,58 @@ from .filters import ProductFilter  # <-- import your filter
 # Products
 # ------------------------------
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_class = ProductFilter  # <-- hook in ProductFilter
     search_fields = ["name", "description", "sku"]
-    ordering_fields = ["price", "created_at", "updated_at"]
+    ordering_fields = ["price", "created_at", "updated_at", "rating"]
     ordering = ["-created_at"]
+
+    def get_queryset(self):
+        queryset = Product.objects.filter(is_active=True)
+        params = self.request.query_params
+
+        # --- Multi-select filters (comma-separated) ---
+        brand = params.get("brand")
+        if brand:
+            brands = [b.strip() for b in brand.split(",")]
+            queryset = queryset.filter(brand__name__in=brands)
+
+        category = params.get("category")
+        if category:
+            categories = [c.strip() for c in category.split(",")]
+            queryset = queryset.filter(category__name__in=categories)
+
+        availability = params.get("availability")
+        if availability:
+            statuses = [a.strip() for a in availability.split(",")]
+            queryset = queryset.filter(availability__in=statuses)
+
+        # --- Price range ---
+        min_price = params.get("min_price")
+        max_price = params.get("max_price")
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
+
+        # --- Minimum rating ---
+        min_rating = params.get("min_rating")
+        if min_rating:
+            queryset = queryset.filter(rating__gte=min_rating)
+
+        # --- Sorting (frontend sends `sort` param) ---
+        sort = params.get("sort")
+        if sort == "price-low":
+            queryset = queryset.order_by("price")
+        elif sort == "price-high":
+            queryset = queryset.order_by("-price")
+        elif sort == "newest":
+            queryset = queryset.order_by("-created_at")
+        elif sort == "rating":
+            queryset = queryset.order_by("-rating")
+
+        return queryset
 
 
 class ProductDetailView(generics.RetrieveAPIView):
