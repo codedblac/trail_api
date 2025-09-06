@@ -13,6 +13,8 @@ from .views import (
     CategoryCreateView,
     CategoryUpdateView,
     CategoryDeleteView,
+    # Brands
+    BrandListView,
     # Hero Banners
     HeroBannerListView,
     HeroBannerDetailView,
@@ -39,6 +41,11 @@ urlpatterns = [
     path("categories/create/", CategoryCreateView.as_view(), name="category-create"),
     path("categories/<int:id>/update/", CategoryUpdateView.as_view(), name="category-update"),
     path("categories/<int:id>/delete/", CategoryDeleteView.as_view(), name="category-delete"),
+
+    # --------------------
+    # Brands
+    # --------------------
+    path("brands/", BrandListView.as_view(), name="brand-list"),
 
     # --------------------
     # Hero Banners

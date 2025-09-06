@@ -1,10 +1,14 @@
-# products/views.py
 from rest_framework import generics, permissions, filters
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Product, Category, HeroBanner
-from .serializers import ProductSerializer, CategorySerializer, HeroBannerSerializer
+from .models import Product, Category, HeroBanner, Brand, ProductReview
+from .serializers import (
+    ProductSerializer,
+    CategorySerializer,
+    HeroBannerSerializer,
+    BrandSerializer,
+    ProductReviewSerializer,
+)
+from .filters import ProductFilter  # <-- import your filter
 
 
 # ------------------------------
@@ -13,10 +17,10 @@ from .serializers import ProductSerializer, CategorySerializer, HeroBannerSerial
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
-    permission_classes = [permissions.AllowAny]  # Public endpoint
+    permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["category", "is_active", "price"]
-    search_fields = ["name", "description"]
+    filterset_class = ProductFilter  # <-- hook in ProductFilter
+    search_fields = ["name", "description", "sku"]
     ordering_fields = ["price", "created_at", "updated_at"]
     ordering = ["-created_at"]
 
@@ -31,7 +35,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAdminUser]  # Admin only
+    permission_classes = [permissions.IsAdminUser]
 
 
 class ProductUpdateView(generics.UpdateAPIView):
@@ -49,10 +53,26 @@ class ProductDeleteView(generics.DestroyAPIView):
 
 
 # ------------------------------
+# Product Reviews
+# ------------------------------
+class ProductReviewListCreateView(generics.ListCreateAPIView):
+    serializer_class = ProductReviewSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        product_id = self.kwargs.get("product_id")
+        return ProductReview.objects.filter(product_id=product_id)
+
+    def perform_create(self, serializer):
+        product_id = self.kwargs.get("product_id")
+        serializer.save(user=self.request.user, product_id=product_id)
+
+
+# ------------------------------
 # Categories
 # ------------------------------
 class CategoryListView(generics.ListAPIView):
-    queryset = Category.objects.all()
+    queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -85,6 +105,26 @@ class CategoryDeleteView(generics.DestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAdminUser]
+    lookup_field = "id"
+
+
+# ------------------------------
+# Brands
+# ------------------------------
+class BrandListView(generics.ListAPIView):
+    queryset = Brand.objects.filter(is_active=True)
+    serializer_class = BrandSerializer
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name"]
+    ordering_fields = ["name"]
+    ordering = ["name"]
+
+
+class BrandDetailView(generics.RetrieveAPIView):
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
+    permission_classes = [permissions.AllowAny]
     lookup_field = "id"
 
 

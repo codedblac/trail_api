@@ -2,10 +2,12 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
     Category,
+    Brand,
     Product,
     ProductImage,
     HeroBanner,
     ProductVariation,
+    ProductReview,
 )
 
 
@@ -17,6 +19,17 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ("name", "parent", "is_active", "created_at")
     list_filter = ("is_active", "created_at")
     search_fields = ("name", "description")
+    prepopulated_fields = {"slug": ("name",)}
+    ordering = ("name",)
+
+
+# ----------------------------
+# BRAND ADMIN
+# ----------------------------
+@admin.register(Brand)
+class BrandAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug")
+    search_fields = ("name",)
     prepopulated_fields = {"slug": ("name",)}
     ordering = ("name",)
 
@@ -54,9 +67,12 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "category",
+        "brand",
         "price",
         "discount_price",
         "stock_quantity",
+        "availability",
+        "average_rating",
         "is_active",
         "is_featured",
         "is_on_sale",
@@ -66,7 +82,9 @@ class ProductAdmin(admin.ModelAdmin):
         "is_active",
         "is_featured",
         "is_on_sale",
+        "availability",
         "category",
+        "brand",
         "created_at",
     )
     search_fields = ("name", "description", "sku")
@@ -120,3 +138,14 @@ class ProductVariationAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "product")
     search_fields = ("name", "sku", "product__name")
     ordering = ("product", "name")
+
+
+# ----------------------------
+# PRODUCT REVIEW ADMIN
+# ----------------------------
+@admin.register(ProductReview)
+class ProductReviewAdmin(admin.ModelAdmin):
+    list_display = ("product", "user", "rating", "created_at")
+    list_filter = ("rating", "created_at")
+    search_fields = ("product__name", "user__email", "comment")
+    ordering = ("-created_at",)
