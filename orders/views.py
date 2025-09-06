@@ -26,9 +26,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return Order.objects.all()
         if user.is_authenticated:
-            return Order.objects.filter(user=user).select_related(
-                "shipping_address", "shipping_method"
-            ).prefetch_related("items", "history")
+            return (
+                Order.objects.filter(user=user)
+                .select_related("shipping_address", "shipping_method")
+                .prefetch_related("items", "history")
+            )
         return Order.objects.none()
 
     def get_serializer_class(self):
@@ -41,9 +43,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = serializer.save()
         # ✅ Log initial history
         OrderHistory.objects.create(
-            order=order, 
-            status=order.status, 
-            note="Order created during checkout"
+            order=order,
+            status=order.status,
+            note="Order created during checkout",
         )
 
     # ----------------------------
@@ -58,8 +60,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         if new_status not in valid_statuses:
             return Response(
-                {"error": "Invalid status"}, 
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Invalid status"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         order.status = new_status
@@ -67,9 +69,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         # Save history
         OrderHistory.objects.create(
-            order=order, 
-            status=new_status, 
-            note="Status updated by admin"
+            order=order,
+            status=new_status,
+            note="Status updated by admin",
         )
 
         return Response(OrderSerializer(order).data)
@@ -80,3 +82,32 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
         history = order.history.all()
         return Response(OrderHistorySerializer(history, many=True).data)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def cancel(self, request, pk=None):
+        """Allow users to cancel their order if not shipped/delivered"""
+        order = self.get_object()
+
+        if order.user != request.user and not request.user.is_staff:
+            return Response(
+                {"error": "You cannot cancel this order"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if order.status in ["shipped", "delivered", "cancelled"]:
+            return Response(
+                {"error": "Order cannot be cancelled at this stage"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        order.status = "cancelled"
+        order.save()
+
+        # Save history
+        OrderHistory.objects.create(
+            order=order,
+            status="cancelled",
+            note="Order cancelled by user",
+        )
+
+        return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)

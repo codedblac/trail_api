@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Order, OrderItem, OrderHistory
-from products.serializers import ProductSerializer
 from cart.models import Cart
 from shipping.models import ShippingAddress, ShippingMethod
 
@@ -9,11 +8,13 @@ from shipping.models import ShippingAddress, ShippingMethod
 # ORDER ITEM
 # ----------------------------
 class OrderItemSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
+    # Flatten product details for frontend
+    name = serializers.CharField(source="product.name", read_only=True)
+    image = serializers.ImageField(source="product.image", read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ["id", "product", "quantity", "price", "subtotal"]
+        fields = ["id", "name", "price", "quantity", "image"]
 
 
 # ----------------------------
@@ -26,45 +27,47 @@ class OrderHistorySerializer(serializers.ModelSerializer):
 
 
 # ----------------------------
+# SHIPPING ADDRESS (nested)
+# ----------------------------
+class ShippingAddressSerializer(serializers.ModelSerializer):
+    firstName = serializers.CharField(source="first_name")
+    lastName = serializers.CharField(source="last_name")
+    postalCode = serializers.CharField(source="postal_code")
+
+    class Meta:
+        model = ShippingAddress
+        fields = ["firstName", "lastName", "address", "city", "postalCode"]
+
+
+# ----------------------------
 # ORDER (READ-ONLY)
 # ----------------------------
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     history = OrderHistorySerializer(many=True, read_only=True)
-    shipping_address = serializers.StringRelatedField()  # shows full_name, city, etc.
-    shipping_method = serializers.StringRelatedField()
+    shippingAddress = ShippingAddressSerializer(source="shipping_address", read_only=True)
+
+    # Map fields to frontend naming conventions
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
+    estimatedDelivery = serializers.CharField(read_only=True, required=False)
+    trackingNumber = serializers.CharField(read_only=True, required=False)
 
     class Meta:
         model = Order
         fields = [
             "id",
-            "user",
-            "email",
-            "full_name",
-            "phone_number",
-            "shipping_address",
-            "shipping_method",
             "status",
-            "subtotal",
-            "discount",
-            "shipping_cost",
             "total",
-            "created_at",
-            "updated_at",
+            "createdAt",
+            "updatedAt",
+            "estimatedDelivery",
+            "trackingNumber",
             "items",
+            "shippingAddress",
             "history",
         ]
-        read_only_fields = (
-            "id",
-            "user",
-            "status",
-            "subtotal",
-            "discount",
-            "shipping_cost",
-            "total",
-            "created_at",
-            "updated_at",
-        )
+        read_only_fields = fields
 
 
 # ----------------------------
@@ -141,7 +144,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             )
 
         discount = cart.coupon.discount_amount if hasattr(cart, "coupon") and cart.coupon else 0
-        shipping_cost = shipping_method.base_cost  # for now, just base cost
+        shipping_cost = shipping_method.base_cost
         total = subtotal - discount + shipping_cost
 
         order.subtotal = subtotal
