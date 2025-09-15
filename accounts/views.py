@@ -8,7 +8,13 @@ from django.conf import settings
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, GenericAPIView
+from rest_framework.generics import (
+    RetrieveUpdateAPIView,
+    ListAPIView,
+    GenericAPIView,
+    RetrieveAPIView,
+    DestroyAPIView,
+)
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -73,13 +79,6 @@ class ProfileView(RetrieveUpdateAPIView):
         return self.request.user
 
 
-class UserListView(ListAPIView):
-    """Admin/staff: list all users."""
-    queryset = User.objects.all().order_by("-date_joined")
-    serializer_class = UserListSerializer
-    permission_classes = [permissions.IsAdminUser]
-
-
 class LogoutView(APIView):
     """Blacklist refresh token (logout)."""
     permission_classes = [permissions.IsAuthenticated]
@@ -141,3 +140,37 @@ class PasswordResetConfirmView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response({"detail": "Password has been reset."}, status=status.HTTP_200_OK)
+
+
+# ---------------------------
+# Admin User Management Views
+# ---------------------------
+
+class UserListView(ListAPIView):
+    """Admin: list all users."""
+    queryset = User.objects.all().order_by("-date_joined")
+    serializer_class = UserListSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class UserDetailView(RetrieveAPIView):
+    """Admin: retrieve user details."""
+    queryset = User.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAdminUser]
+    lookup_field = "id"
+
+
+class UserUpdateView(RetrieveUpdateAPIView):
+    """Admin: update user roles/permissions or profile."""
+    queryset = User.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAdminUser]
+    lookup_field = "id"
+
+
+class UserDeleteView(DestroyAPIView):
+    """Admin: delete a user."""
+    queryset = User.objects.all()
+    permission_classes = [permissions.IsAdminUser]
+    lookup_field = "id"

@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
+from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -50,7 +50,7 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer for retrieving and updating user profile."""
+    """Serializer for retrieving and updating user profile (self)."""
     class Meta:
         model = User
         fields = [
@@ -65,6 +65,25 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "full_name", "role", "is_active", "date_joined"]
+
+
+class AdminUserDetailSerializer(serializers.ModelSerializer):
+    """Detailed view of a user (for admin)."""
+    class Meta:
+        model = User
+        fields = [
+            "id", "email", "full_name", "phone", "address",
+            "city", "postal_code", "role", "is_active",
+            "is_staff", "is_superuser", "date_joined"
+        ]
+        read_only_fields = ["id", "date_joined", "email"]
+
+
+class AdminUserUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for admin to update roles/permissions."""
+    class Meta:
+        model = User
+        fields = ["role", "is_active", "is_staff", "is_superuser"]
 
 
 class JWTTokenSerializer(serializers.Serializer):

@@ -7,6 +7,8 @@ from .views import (
     ProductCreateView,
     ProductUpdateView,
     ProductDeleteView,
+    # Reviews
+    ProductReviewListCreateView,
     # Categories
     CategoryListView,
     CategoryDetailView,
@@ -15,6 +17,7 @@ from .views import (
     CategoryDeleteView,
     # Brands
     BrandListView,
+    BrandDetailView,
     # Hero Banners
     HeroBannerListView,
     HeroBannerDetailView,
@@ -28,10 +31,13 @@ urlpatterns = [
     # Products
     # --------------------
     path("products/", ProductListView.as_view(), name="product-list"),
-    path("products/<int:id>/", ProductDetailView.as_view(), name="product-detail"),
+    path("products/<slug:slug>/", ProductDetailView.as_view(), name="product-detail"),  # changed to slug
     path("products/create/", ProductCreateView.as_view(), name="product-create"),
     path("products/<int:id>/update/", ProductUpdateView.as_view(), name="product-update"),
     path("products/<int:id>/delete/", ProductDeleteView.as_view(), name="product-delete"),
+
+    # Product Reviews
+    path("products/<int:product_id>/reviews/", ProductReviewListCreateView.as_view(), name="product-reviews"),
 
     # --------------------
     # Categories
@@ -46,6 +52,7 @@ urlpatterns = [
     # Brands
     # --------------------
     path("brands/", BrandListView.as_view(), name="brand-list"),
+    path("brands/<int:id>/", BrandDetailView.as_view(), name="brand-detail"),
 
     # --------------------
     # Hero Banners

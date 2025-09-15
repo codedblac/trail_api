@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Avg, Q
 from .models import Product, Category, HeroBanner, Brand, ProductReview
 from .serializers import (
     ProductSerializer,
@@ -8,7 +9,6 @@ from .serializers import (
     BrandSerializer,
     ProductReviewSerializer,
 )
-from .filters import ProductFilter  # <-- import your filter
 
 
 # ------------------------------
@@ -19,23 +19,31 @@ class ProductListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name", "description", "sku"]
-    ordering_fields = ["price", "created_at", "updated_at", "rating"]
+    ordering_fields = ["price", "created_at", "updated_at", "avg_rating"]
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True)
+        queryset = Product.objects.filter(is_active=True).annotate(
+            avg_rating=Avg("reviews__rating")
+        )
         params = self.request.query_params
 
         # --- Multi-select filters (comma-separated) ---
         brand = params.get("brand")
         if brand:
-            brands = [b.strip() for b in brand.split(",")]
-            queryset = queryset.filter(brand__name__in=brands)
+            values = [b.strip() for b in brand.split(",")]
+            if all(v.isdigit() for v in values):
+                queryset = queryset.filter(brand_id__in=values)
+            else:
+                queryset = queryset.filter(brand__name__in=values)
 
         category = params.get("category")
         if category:
-            categories = [c.strip() for c in category.split(",")]
-            queryset = queryset.filter(category__name__in=categories)
+            values = [c.strip() for c in category.split(",")]
+            if all(v.isdigit() for v in values):
+                queryset = queryset.filter(category_id__in=values)
+            else:
+                queryset = queryset.filter(category__name__in=values)
 
         availability = params.get("availability")
         if availability:
@@ -53,7 +61,7 @@ class ProductListView(generics.ListAPIView):
         # --- Minimum rating ---
         min_rating = params.get("min_rating")
         if min_rating:
-            queryset = queryset.filter(rating__gte=min_rating)
+            queryset = queryset.filter(avg_rating__gte=min_rating)
 
         # --- Sorting (frontend sends `sort` param) ---
         sort = params.get("sort")
@@ -64,7 +72,7 @@ class ProductListView(generics.ListAPIView):
         elif sort == "newest":
             queryset = queryset.order_by("-created_at")
         elif sort == "rating":
-            queryset = queryset.order_by("-rating")
+            queryset = queryset.order_by("-avg_rating")
 
         return queryset
 
@@ -73,7 +81,7 @@ class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
-    lookup_field = "id"
+    lookup_field = "slug"   # Use slug for SEO
 
 
 class ProductCreateView(generics.CreateAPIView):
@@ -176,10 +184,9 @@ class BrandDetailView(generics.RetrieveAPIView):
 # Hero Banners / Ads
 # ------------------------------
 class HeroBannerListView(generics.ListAPIView):
-    queryset = HeroBanner.objects.filter(is_active=True)
+    queryset = HeroBanner.objects.filter(is_active=True).order_by("display_order", "-created_at")
     serializer_class = HeroBannerSerializer
     permission_classes = [permissions.AllowAny]
-    ordering = ["-created_at"]
 
 
 class HeroBannerDetailView(generics.RetrieveAPIView):

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "payments",
     "shipping",  
     "hero",
+    "analytics",
 ]
 
 MIDDLEWARE = [
