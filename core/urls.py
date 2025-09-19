@@ -14,17 +14,17 @@ urlpatterns = [
     # Django Admin
     path("admin/", admin.site.urls),
 
-    # API v1 endpoints with namespacing
-    path("api/v1/accounts/", include(("accounts.urls", "accounts"), namespace="accounts")),
-    path("api/v1/products/", include(("products.urls", "products"), namespace="products")),
-    path("api/v1/cart/", include(("cart.urls", "cart"), namespace="cart")),
-    path("api/v1/orders/", include(("orders.urls", "orders"), namespace="orders")),
-    path("api/v1/payments/", include(("payments.urls", "payments"), namespace="payments")),
-    path("api/v1/shipping/", include(("shipping.urls", "shipping"), namespace="shipping")),
-    path("api/v1/hero/", include(("hero.urls", "hero"), namespace="hero")),
-    path("api/v1/analytics/", include(("analytics.urls", "analytics"), namespace="analytics")),
+    # API endpoints without versioning
+    path("api/accounts/", include(("accounts.urls", "accounts"), namespace="accounts")),
+    path("api/products/", include(("products.urls", "products"), namespace="products")),
+    path("api/cart/", include(("cart.urls", "cart"), namespace="cart")),
+    path("api/orders/", include(("orders.urls", "orders"), namespace="orders")),
+    path("api/payments/", include(("payments.urls", "payments"), namespace="payments")),
+    path("api/shipping/", include(("shipping.urls", "shipping"), namespace="shipping")),
+    path("api/hero/", include(("hero.urls", "hero"), namespace="hero")),
+    path("api/analytics/", include(("analytics.urls", "analytics"), namespace="analytics")),
 
-    # Health check (no versioning, for monitoring)
+    # Health check
     path("api/health/", health_check, name="health-check"),
 ]
 

@@ -121,20 +121,34 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
 
 class SetNewPasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(write_only=True, min_length=6)
+    """Serializer to confirm password reset with uid + token + new passwords."""
+    uid = serializers.CharField(write_only=True)
     token = serializers.CharField(write_only=True)
-    uidb64 = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=6)
+    confirm_password = serializers.CharField(write_only=True, min_length=6)
 
     def validate(self, attrs):
+        uidb64 = attrs.get("uid")
+        token = attrs.get("token")
+        new_password = attrs.get("new_password")
+        confirm_password = attrs.get("confirm_password")
+
+        if new_password != confirm_password:
+            raise serializers.ValidationError({"password": "Passwords do not match."})
+
+        # Decode UID
         try:
-            uid = smart_str(urlsafe_base64_decode(attrs["uidb64"]))
+            uid = smart_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(id=uid)
         except (User.DoesNotExist, DjangoUnicodeDecodeError):
             raise serializers.ValidationError("Invalid reset link.")
 
-        if not PasswordResetTokenGenerator().check_token(user, attrs["token"]):
+        # Validate token
+        if not PasswordResetTokenGenerator().check_token(user, token):
             raise serializers.ValidationError("Reset link is invalid or expired.")
 
-        user.set_password(attrs["password"])
+        # Save new password
+        user.set_password(new_password)
         user.save()
+
         return attrs

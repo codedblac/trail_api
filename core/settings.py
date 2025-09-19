@@ -46,10 +46,10 @@ INSTALLED_APPS = [
     "analytics",
 ]
 
-MIDDLEWARE = [
+MIDDLEWARE = ["corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
+    
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,7 +72,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = False
-
+CORS_ALLOW_CREDENTIALS = True
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
